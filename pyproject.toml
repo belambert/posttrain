@@ -1,14 +1,51 @@
 [project]
 name = "posttrain"
 version = "0.1.0"
-description = "Add your description here"
+description = "Post-training Qwen3-1.7B-Base: SFT, preference tuning, RL"
 readme = "README.md"
 authors = [
     { name = "Ben Lambert", email = "blambert@gmail.com" }
 ]
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "accelerate>=1.0",
+    "datasets>=3.0",
+    "torch>=2.9",
+    "transformers>=4.51",
+    "trl>=1.9",
+    "typer>=0.15",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black>=24.0",
+    "isort>=5.13",
+    "mypy>=1.11",
+    "pytest>=8.0",
+]
+
+[project.scripts]
+posttrain = "posttrain.cli:app"
 
 [build-system]
 requires = ["uv_build>=0.9.3,<0.10.0"]
 build-backend = "uv_build"
+
+# the Spark's GB10 (Blackwell, sm_121) needs a CUDA 13 build; PyPI's default wheel
+# won't drive it. macOS keeps the stock wheel for its MPS build.
+[[tool.uv.index]]
+name = "pytorch-cu130"
+url = "https://download.pytorch.org/whl/cu130"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cu130", marker = "sys_platform == 'linux'" }]
+
+[tool.black]
+target-version = ["py313"]
+
+[tool.isort]
+profile = "black"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,16 @@
+# Tulu 3 SFT recipe: 2 epochs, linear decay, effective batch 128, loss on
+# assistant turns only. Tune batch_size/grad_accum to your device, keeping
+# their product at 128.
+
+out_dir = "runs/sft"
+
+base = "Qwen/Qwen3-1.7B-Base"
+template_src = "Qwen/Qwen3-1.7B"
+dataset = "allenai/tulu-3-sft-mixture"
+
+epochs = 2.0
+lr = 5e-6
+batch_size = 2
+grad_accum = 64
+max_length = 4096
+seed = 0
