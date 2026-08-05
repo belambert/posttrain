@@ -11,8 +11,10 @@ tuning and RL come later.
 
     uv sync
 
-On the Spark, install the aarch64 CUDA build of PyTorch from NVIDIA's index rather than the
-default wheel.
+That is all that is needed on either machine. The Spark's GB10 is Blackwell (sm_121) and
+needs a CUDA 13 build of PyTorch, so `pyproject.toml` routes torch to the `cu130` index on
+Linux and leaves macOS on the stock PyPI wheel for its MPS build. `uv sync` picks the right
+one from the platform.
 
 ## Running SFT
 

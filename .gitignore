@@ -12,3 +12,4 @@ wheels/
 # Training outputs
 runs/
 .pytest_cache/
+uv.lock
