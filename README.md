@@ -31,6 +31,15 @@ of version control:
 
     uv run posttrain sft -s lr=1e-5 -s n=50000
 
+## Verifying before a long run
+
+    uv run posttrain check
+
+This builds the real trainer, pulls the first batch, and decodes exactly which tokens carry
+loss — printing the trained text and exiting non-zero if nothing is trained on, if user
+turns leak into the loss, or if the stop token is masked out. Worth running before any
+multi-hour job, since a broken mask does not raise on its own.
+
 ## Configs
 
 Recipes live in `config/` as TOML and are read into `SftConfig` (`src/posttrain/config.py`),

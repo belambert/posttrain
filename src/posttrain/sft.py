@@ -10,6 +10,16 @@ from posttrain.data import load_sft
 
 def run_sft(cfg: SftConfig) -> str:
     """Run SFT and return the output dir."""
+    trainer = build_trainer(cfg)
+    trainer.train()
+
+    trainer.save_model(cfg.out_dir)
+    trainer.processing_class.save_pretrained(cfg.out_dir)
+    return cfg.out_dir
+
+
+def build_trainer(cfg: SftConfig) -> SFTTrainer:
+    """Assemble the trainer; shared with `posttrain check` so both see one path."""
     device = cfg.device or resolve_device()
     model, tok = load_base(cfg.base, device)
 
@@ -19,18 +29,13 @@ def run_sft(cfg: SftConfig) -> str:
 
     train_ds, eval_ds = load_sft(cfg.dataset, n=cfg.n, eval_n=cfg.eval_n, seed=cfg.seed)
 
-    trainer = SFTTrainer(
+    return SFTTrainer(
         model=model,
         args=_sft_config(cfg, device),
         train_dataset=train_ds,
         eval_dataset=eval_ds,
         processing_class=tok,
     )
-    trainer.train()
-
-    trainer.save_model(cfg.out_dir)
-    tok.save_pretrained(cfg.out_dir)
-    return cfg.out_dir
 
 
 def _sft_config(cfg: SftConfig, device: str) -> SFTConfig:
