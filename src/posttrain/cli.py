@@ -14,6 +14,12 @@ SetOpt = Annotated[
 ]
 
 
+@app.callback()
+def main() -> None:
+    """Keeps `sft` a named subcommand; Typer would otherwise collapse a lone
+    command to the top level, and later stages add dpo and rl alongside it."""
+
+
 @app.command()
 def sft(config: str = "config/sft.toml", set_: SetOpt = []) -> None:
     """Supervised finetuning on the Tulu 3 SFT mixture."""
