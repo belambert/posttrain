@@ -29,3 +29,12 @@ def sft(config: str = "config/sft.toml", set_: SetOpt = []) -> None:
     from posttrain.sft import run_sft  # deferred so --help does not import torch
 
     run_sft(cfg)
+
+
+@app.command()
+def check(config: str = "config/smoke.toml", set_: SetOpt = []) -> None:
+    """Show which tokens the loss mask actually covers, and exit 1 if wrong."""
+    from posttrain.check import check_masking
+
+    if not check_masking(SftConfig.load(config, set_)):
+        raise typer.Exit(1)
