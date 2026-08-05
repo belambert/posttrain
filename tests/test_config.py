@@ -4,6 +4,7 @@ from posttrain.config import SftConfig
 
 SFT_TOML = "config/sft.toml"
 SMOKE_TOML = "config/smoke.toml"
+PILOT_TOML = "config/pilot.toml"
 
 
 def test_loads_shipped_recipe():
@@ -21,6 +22,14 @@ def test_overrides_are_typed():
 
 def test_override_clears_optional():
     assert SftConfig.load(SFT_TOML, ["n=none"]).n is None
+
+
+def test_pilot_stays_comparable_to_the_full_run():
+    """A throughput number is only useful if the shape of the step matches."""
+    pilot, full = SftConfig.load(PILOT_TOML), SftConfig.load(SFT_TOML)
+    assert pilot.n == 50000 and pilot.n < 939000
+    for field in ("lr", "batch_size", "grad_accum", "max_length", "base"):
+        assert getattr(pilot, field) == getattr(full, field)
 
 
 def test_wandb_is_opt_in():

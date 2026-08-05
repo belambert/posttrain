@@ -18,9 +18,15 @@ one from the platform.
 
 ## Running SFT
 
-Prove the pipeline works end to end on 64 examples first:
+Three configs, in the order they are meant to be used. First prove the pipeline runs end to
+end on 64 examples:
 
     uv run posttrain sft --config config/smoke.toml
+
+Then a 50k-example pilot, which is the one that tells you what the full run will cost —
+divide its throughput into 939k examples times two epochs before committing to it:
+
+    uv run posttrain sft --config config/pilot.toml
 
 Then the real run:
 
@@ -60,10 +66,11 @@ Recipes live in `config/` as TOML and are read into `SftConfig` (`src/posttrain/
 which is the single source of truth for the schema — unknown keys in either the file or a
 `--set` override are an error rather than a silent no-op.
 
-| Config             | Purpose                                                     |
-| ------------------ | ----------------------------------------------------------- |
-| `config/sft.toml`  | The Tulu 3 recipe: 2 epochs, lr 5e-6, effective batch 128.   |
-| `config/smoke.toml`| 64 examples, short sequences — a correctness check, not a run.|
+| Config              | Purpose                                                            |
+| ------------------- | ------------------------------------------------------------------ |
+| `config/smoke.toml` | 64 examples, short sequences — a correctness check, not a run.      |
+| `config/pilot.toml` | 50k examples, 1 epoch — a real loss curve and a throughput number.  |
+| `config/sft.toml`   | The Tulu 3 recipe: 2 epochs, lr 5e-6, effective batch 128.          |
 
 `batch_size * grad_accum` is the effective batch size; keep the product at 128 when trading
 one against the other to fit memory.
