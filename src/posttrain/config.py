@@ -31,6 +31,8 @@ class SftConfig:
     logging_steps: int = 10
     device: str | None = None  # cpu, mps, cuda; autodetected when unset
     seed: int = 0
+    wandb_project: str | None = None  # unset disables wandb entirely
+    run_name: str | None = None
 
     @classmethod
     def load(cls, path: str | Path, overrides: Iterable[str] = ()) -> Self:

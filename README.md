@@ -40,6 +40,20 @@ loss — printing the trained text and exiting non-zero if nothing is trained on
 turns leak into the loss, or if the stop token is masked out. Worth running before any
 multi-hour job, since a broken mask does not raise on its own.
 
+## Tracking
+
+Runs log to Weights & Biases when `wandb_project` is set, which `config/sft.toml` does and
+`config/smoke.toml` deliberately does not. Log in once per machine:
+
+    uv run wandb login
+
+To train without it, clear the key:
+
+    uv run posttrain sft -s wandb_project=none
+
+`posttrain check` never logs, whatever the config says — a pre-flight check shouldn't leave
+runs behind.
+
 ## Configs
 
 Recipes live in `config/` as TOML and are read into `SftConfig` (`src/posttrain/config.py`),

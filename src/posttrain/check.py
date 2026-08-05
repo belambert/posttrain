@@ -5,6 +5,8 @@ template with no `{% generation %}` markers and you get an all-zero mask rather
 than an error, so training runs to completion having learned nothing.
 """
 
+from dataclasses import replace
+
 import typer
 
 from posttrain.config import SftConfig
@@ -19,7 +21,8 @@ def check_masking(cfg: SftConfig, n_examples: int = 3) -> bool:
     """Decode what the first batch actually trains on. True if it looks right."""
     from posttrain.sft import build_trainer  # deferred: pulls in torch
 
-    trainer = build_trainer(cfg)
+    # a pre-flight check shouldn't litter the wandb project with runs
+    trainer = build_trainer(replace(cfg, wandb_project=None))
     tok = trainer.processing_class
     batch = next(iter(trainer.get_train_dataloader()))
 

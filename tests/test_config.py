@@ -3,6 +3,7 @@ import pytest
 from posttrain.config import SftConfig
 
 SFT_TOML = "config/sft.toml"
+SMOKE_TOML = "config/smoke.toml"
 
 
 def test_loads_shipped_recipe():
@@ -20,6 +21,12 @@ def test_overrides_are_typed():
 
 def test_override_clears_optional():
     assert SftConfig.load(SFT_TOML, ["n=none"]).n is None
+
+
+def test_wandb_is_opt_in():
+    assert SftConfig.load(SFT_TOML).wandb_project == "posttrain"
+    assert SftConfig.load(SMOKE_TOML).wandb_project is None
+    assert SftConfig.load(SFT_TOML, ["wandb_project=none"]).wandb_project is None
 
 
 @pytest.mark.parametrize("bad", ["lr", "nope=1"])

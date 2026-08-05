@@ -1,5 +1,7 @@
 """Stage one: supervised finetuning of Qwen3-1.7B-Base on the Tulu 3 SFT mixture."""
 
+import os
+
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from trl import SFTConfig, SFTTrainer, clone_chat_template
@@ -20,6 +22,10 @@ def run_sft(cfg: SftConfig) -> str:
 
 def build_trainer(cfg: SftConfig) -> SFTTrainer:
     """Assemble the trainer; shared with `posttrain check` so both see one path."""
+    if cfg.wandb_project:
+        # the HF integration reads the project from the environment, not from args
+        os.environ.setdefault("WANDB_PROJECT", cfg.wandb_project)
+
     device = cfg.device or resolve_device()
     model, tok = load_base(cfg.base, device)
 
@@ -58,7 +64,8 @@ def _sft_config(cfg: SftConfig, device: str) -> SFTConfig:
         save_steps=cfg.save_steps,
         save_total_limit=2,
         seed=cfg.seed,
-        report_to=[],
+        report_to=["wandb"] if cfg.wandb_project else [],
+        run_name=cfg.run_name,
     )
 
 

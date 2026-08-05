@@ -8,6 +8,10 @@ base = "Qwen/Qwen3-1.7B-Base"
 template_src = "Qwen/Qwen3-1.7B"
 dataset = "allenai/tulu-3-sft-mixture"
 
+# comment out to train without logging to wandb
+wandb_project = "posttrain"
+run_name = "sft-tulu3"
+
 epochs = 2.0
 lr = 5e-6
 batch_size = 2
