@@ -1,0 +1,13 @@
+# Tiny run to prove the pipeline works end to end before committing the Spark to it.
+
+out_dir = "runs/smoke"
+
+n = 64
+eval_n = 8
+epochs = 1.0
+batch_size = 1
+grad_accum = 4
+max_length = 512
+logging_steps = 1
+eval_steps = 10
+save_steps = 10

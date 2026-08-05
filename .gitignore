@@ -8,3 +8,7 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Training outputs
+runs/
+.pytest_cache/

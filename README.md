@@ -1,0 +1,64 @@
+# posttrain
+
+Taking `Qwen/Qwen3-1.7B-Base` through a full post-training pipeline on a DGX Spark, and
+comparing the result against Qwen's own post-trained `Qwen/Qwen3-1.7B`. That comparison is
+the point: it measures how close an open recipe gets to Qwen's own.
+
+Stage one — supervised finetuning on the Tulu 3 SFT mixture. Preference
+tuning and RL come later.
+
+## Setup
+
+    uv sync
+
+On the Spark, install the aarch64 CUDA build of PyTorch from NVIDIA's index rather than the
+default wheel.
+
+## Running SFT
+
+Prove the pipeline works end to end on 64 examples first:
+
+    uv run posttrain sft --config config/smoke.toml
+
+Then the real run:
+
+    uv run posttrain sft
+
+Any config key can be overridden from the command line, which keeps one-off experiments out
+of version control:
+
+    uv run posttrain sft -s lr=1e-5 -s n=50000
+
+## Configs
+
+Recipes live in `config/` as TOML and are read into `SftConfig` (`src/posttrain/config.py`),
+which is the single source of truth for the schema — unknown keys in either the file or a
+`--set` override are an error rather than a silent no-op.
+
+| Config             | Purpose                                                     |
+| ------------------ | ----------------------------------------------------------- |
+| `config/sft.toml`  | The Tulu 3 recipe: 2 epochs, lr 5e-6, effective batch 128.   |
+| `config/smoke.toml`| 64 examples, short sequences — a correctness check, not a run.|
+
+`batch_size * grad_accum` is the effective batch size; keep the product at 128 when trading
+one against the other to fit memory.
+
+## Chat template
+
+The base checkpoint ships no usable chat format, so `clone_chat_template` copies Qwen3's
+ChatML template across, switches the EOS token from `<|endoftext|>` to `<|im_end|>`, and
+resizes the embeddings for the added tokens.
+
+Loss is computed on assistant turns only (`assistant_only_loss=True`). This matters more
+than it looks: Qwen3's published template has no `{% generation %}` markers, and asking for
+assistant masks against it does not raise — it silently returns an all-zero mask, which
+would train on no tokens at all. TRL patches the template itself when the markers are
+missing, and warns if any example ends up with zero assistant tokens.
+
+## Development
+
+    uv run pytest
+    uv run black . && uv run isort .
+
+The tests cover config loading and CLI wiring only, and deliberately run without torch or
+trl installed — `posttrain sft --help` defers the training imports so it stays fast.
