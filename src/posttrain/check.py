@@ -5,9 +5,14 @@ template with no `{% generation %}` markers and you get an all-zero mask rather
 than an error, so training runs to completion having learned nothing.
 """
 
+import typer
+
 from posttrain.config import SftConfig
 
 IGNORE = -100  # HF's "do not compute loss here" label
+
+RED = typer.colors.RED
+GREEN = typer.colors.GREEN
 
 
 def check_masking(cfg: SftConfig, n_examples: int = 3) -> bool:
@@ -19,8 +24,7 @@ def check_masking(cfg: SftConfig, n_examples: int = 3) -> bool:
     batch = next(iter(trainer.get_train_dataloader()))
 
     if "labels" not in batch:
-        print("FAIL: collator produced no labels")
-        return False
+        return _banner(False, "the collator produced no labels at all")
 
     ok = True
     for i in range(min(n_examples, len(batch["labels"]))):
@@ -31,30 +35,38 @@ def check_masking(cfg: SftConfig, n_examples: int = 3) -> bool:
         n_trained = sum(l != IGNORE for l in labels)
         n_real = sum(l != IGNORE or t != tok.pad_token_id for t, l in zip(ids, labels))
 
-        print(f"\n--- example {i}: {n_trained}/{n_real} tokens trained on")
-        print(f"    trained text: {trained[:400]!r}")
+        typer.secho(f"\nexample {i}", bold=True)
+        typer.echo(f"  {n_trained} of {n_real} tokens carry loss")
+        typer.echo(f"  trained text: {trained[:400]!r}")
         ok &= _judge(trained, n_trained, tok)
 
-    return ok
+    return _banner(
+        ok, "loss covers assistant turns only" if ok else "do not train on this"
+    )
 
 
 def _judge(trained: str, n_trained: int, tok) -> bool:
-    """Report the ways a mask goes wrong, rather than stopping at the first."""
-    ok = True
+    """Report every way the mask is wrong, rather than stopping at the first."""
+    problems = []
     if n_trained == 0:
-        print("    FAIL: nothing is trained on — the generation markers are missing")
-        ok = False
-
+        problems.append("nothing is trained on — the generation markers are missing")
     if "<|im_start|>user" in trained:
-        print("    FAIL: user turns are inside the loss")
-        ok = False
-
+        problems.append("user turns leaked into the loss")
     if n_trained and tok.eos_token not in trained:
-        print(
-            f"    FAIL: {tok.eos_token} is masked out — the model won't learn to stop"
-        )
-        ok = False
+        problems.append(f"{tok.eos_token} is masked out — it won't learn to stop")
 
-    if ok:
-        print("    ok: assistant turns only, stop token included")
+    for p in problems:
+        typer.secho(f"  ✗ {p}", fg=RED, bold=True)
+    if not problems:
+        typer.secho("  ✓ assistant turns only, stop token included", fg=GREEN)
+
+    return not problems
+
+
+def _banner(ok: bool, detail: str) -> bool:
+    """Make the verdict impossible to miss in a wall of training output."""
+    label, color = ("PASS", GREEN) if ok else ("FAIL", RED)
+    typer.echo()
+    typer.secho(f"  {label}  {detail}  ", fg=typer.colors.BLACK, bg=color, bold=True)
+    typer.echo()
     return ok
