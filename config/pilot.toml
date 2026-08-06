@@ -1,6 +1,6 @@
 # Mid-size run: 50k examples, one epoch. Enough steps for a real loss curve and a
-# throughput number to extrapolate the full mixture from. Only the deltas from the
-# Tulu 3 recipe are set here — lr, batch size, and sequence length are inherited so
+# throughput number to extrapolate the full mixture from. The batch shape is spelled
+# out because it is what the run measures; lr and sequence length stay inherited so
 # the numbers transfer to the full run.
 
 out_dir = "runs/pilot"
@@ -10,6 +10,9 @@ run_name = "sft-pilot"
 
 n = 50000
 epochs = 1.0
+
+batch_size = 8
+grad_accum = 16
 
 eval_steps = 50
 save_steps = 100
