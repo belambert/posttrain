@@ -14,7 +14,7 @@ run_name = "sft-tulu3"
 
 epochs = 2.0
 lr = 5e-6
-batch_size = 2
-grad_accum = 64
+batch_size = 8
+grad_accum = 16
 max_length = 4096
 seed = 0

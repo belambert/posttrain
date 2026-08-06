@@ -32,6 +32,13 @@ def test_pilot_stays_comparable_to_the_full_run():
         assert getattr(pilot, field) == getattr(full, field)
 
 
+def test_smoke_still_takes_a_step():
+    """It pins a tiny batch: inheriting the recipe's 128 would give it zero steps."""
+    cfg = SftConfig.load(SMOKE_TOML)
+    n_train = cfg.n - min(cfg.eval_n, cfg.n // 10)
+    assert n_train // (cfg.batch_size * cfg.grad_accum) >= 1
+
+
 def test_length_grouping_defaults_on_and_is_overridable():
     assert SftConfig.load(SFT_TOML).group_by_length is True
     assert SftConfig.load(SFT_TOML, ["group_by_length=false"]).group_by_length is False
