@@ -29,6 +29,7 @@ class SftConfig:
     eval_steps: int = 200
     save_steps: int = 200
     logging_steps: int = 10
+    group_by_length: bool = True  # batch similar lengths so padding stays tight
     device: str | None = None  # cpu, mps, cuda; autodetected when unset
     seed: int = 0
     wandb_project: str | None = None  # unset disables wandb entirely

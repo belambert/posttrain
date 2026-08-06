@@ -32,6 +32,11 @@ def test_pilot_stays_comparable_to_the_full_run():
         assert getattr(pilot, field) == getattr(full, field)
 
 
+def test_length_grouping_defaults_on_and_is_overridable():
+    assert SftConfig.load(SFT_TOML).group_by_length is True
+    assert SftConfig.load(SFT_TOML, ["group_by_length=false"]).group_by_length is False
+
+
 def test_wandb_is_opt_in():
     assert SftConfig.load(SFT_TOML).wandb_project == "posttrain"
     assert SftConfig.load(SMOKE_TOML).wandb_project is None

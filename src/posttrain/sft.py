@@ -54,7 +54,11 @@ def _sft_config(cfg: SftConfig, device: str) -> SFTConfig:
         per_device_train_batch_size=cfg.batch_size,
         gradient_accumulation_steps=cfg.grad_accum,
         max_length=cfg.max_length,
-        packing=False,  # packing would blur the assistant mask across examples
+        # packing is unavailable: its default bfd strategy forces padding-free, which
+        # needs FlashAttention 2/3 kernels that have no aarch64 build. Grouping by
+        # length is the substitute — it can't remove padding, only shrink it.
+        packing=False,
+        train_sampling_strategy="group_by_length" if cfg.group_by_length else "random",
         assistant_only_loss=True,
         gradient_checkpointing=True,
         bf16=device == "cuda",

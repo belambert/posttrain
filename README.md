@@ -72,6 +72,21 @@ which is the single source of truth for the schema — unknown keys in either th
 | `config/pilot.toml` | 50k examples, 1 epoch — a real loss curve and a throughput number.  |
 | `config/sft.toml`   | The Tulu 3 recipe: 2 epochs, lr 5e-6, effective batch 128.          |
 
+## Throughput
+
+Batches pad to the longest example in them, and the Tulu mixture is wildly uneven — most
+examples are a few hundred tokens against a 4096 limit. `group_by_length` (on by default)
+batches similar lengths together so that padding stays tight. It costs one pass over the
+tokenized dataset at startup to measure lengths, and it groups at effective-batch
+granularity, shuffling megabatches so the ordering stays random enough.
+
+Packing would be the stronger fix, but it isn't available here: TRL's default `bfd` strategy
+forces padding-free batching, which needs FlashAttention 2/3 kernels with no aarch64 build,
+and the alternative `wrapped` strategy cuts mid-sequence and would corrupt the assistant
+mask. Grouping shrinks padding; only packing removes it.
+
+    uv run posttrain sft -s group_by_length=false   # to compare
+
 `batch_size * grad_accum` is the effective batch size; keep the product at 128 when trading
 one against the other to fit memory.
 
