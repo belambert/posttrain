@@ -22,8 +22,8 @@ class SftConfig:
     n: int | None = None  # subsample the ~939k-row mixture
     epochs: float = 2.0
     lr: float = 5e-6
-    batch_size: int = 8
-    grad_accum: int = 16
+    batch_size: int = 2
+    grad_accum: int = 64
     max_length: int = 4096
     eval_n: int = 500
     eval_steps: int = 200
