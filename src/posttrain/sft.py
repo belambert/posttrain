@@ -3,6 +3,7 @@
 import os
 
 import torch
+from torch.utils.data import SequentialSampler
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from trl import SFTConfig, SFTTrainer, clone_chat_template
 
@@ -35,13 +36,25 @@ def build_trainer(cfg: SftConfig) -> SFTTrainer:
 
     train_ds, eval_ds = load_sft(cfg.dataset, n=cfg.n, eval_n=cfg.eval_n, seed=cfg.seed)
 
-    return SFTTrainer(
+    return _FixedEvalTrainer(
         model=model,
         args=_sft_config(cfg, device),
         train_dataset=train_ds,
         eval_dataset=eval_ds,
         processing_class=tok,
     )
+
+
+class _FixedEvalTrainer(SFTTrainer):
+    """Evaluate in a fixed order so eval_loss stays comparable.
+
+    The base sampler follows `train_sampling_strategy`, so length grouping reshuffles
+    the eval set on every call from the global RNG. Since eval loss is averaged per
+    batch, that moves the number without the model changing.
+    """
+
+    def _get_eval_sampler(self, eval_dataset) -> SequentialSampler:
+        return SequentialSampler(eval_dataset)
 
 
 def _sft_config(cfg: SftConfig, device: str) -> SFTConfig:

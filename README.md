@@ -87,6 +87,12 @@ mask. Grouping shrinks padding; only packing removes it.
 
     uv run posttrain sft -s group_by_length=false   # to compare
 
+Grouping has two side effects worth knowing. Training loss develops a sawtooth: megabatches
+are sorted longest-first, so each one ends on short examples that carry few tokens and score
+a worse per-token loss. Read `eval_loss` rather than training loss. Evaluation itself is
+pinned to a fixed order regardless of this setting — otherwise the eval set would be
+reshuffled on every call and `eval_loss`, which averages per batch, would drift on its own.
+
 `batch_size * grad_accum` is the effective batch size; keep the product at 128 when trading
 one against the other to fit memory.
 
