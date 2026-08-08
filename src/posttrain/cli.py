@@ -32,6 +32,33 @@ def sft(config: str = "config/sft.toml", set_: SetOpt = []) -> None:
 
 
 @app.command()
+def chat(
+    model: str = "runs/sft",
+    prompt: str | None = typer.Option(None, "--prompt", "-p", help="One-shot ask."),
+    max_new_tokens: int = 512,
+    temperature: float = 0.7,
+    device: str | None = None,
+) -> None:
+    """Sample from a checkpoint. Without --prompt, opens a multi-turn session."""
+    from posttrain.chat import load_for_chat, reply
+
+    m, tok = load_for_chat(model, device)
+    kw = dict(max_new_tokens=max_new_tokens, temperature=temperature)
+
+    if prompt:
+        typer.echo(reply(m, tok, [{"role": "user", "content": prompt}], **kw))
+        return
+
+    typer.secho(f"{model} — blank line or ctrl-d to exit", fg=typer.colors.CYAN)
+    messages: list[dict] = []
+    while user := typer.prompt("\nyou", default="", show_default=False).strip():
+        messages.append({"role": "user", "content": user})
+        answer = reply(m, tok, messages, **kw)
+        messages.append({"role": "assistant", "content": answer})
+        typer.secho(f"\n{answer}", fg=typer.colors.GREEN)
+
+
+@app.command()
 def check(config: str = "config/smoke.toml", set_: SetOpt = []) -> None:
     """Show which tokens the loss mask actually covers, and exit 1 if wrong."""
     from posttrain.check import check_masking

@@ -46,6 +46,18 @@ loss — printing the trained text and exiting non-zero if nothing is trained on
 turns leak into the loss, or if the stop token is masked out. Worth running before any
 multi-hour job, since a broken mask does not raise on its own.
 
+## Sampling from a checkpoint
+
+    uv run posttrain chat runs/pilot
+    uv run posttrain chat runs/pilot -p "Explain backprop to a physicist."
+
+Falling loss and a usable chat model are different claims, and only the second is what the
+comparison against Qwen's post-train is about. Point it at `Qwen/Qwen3-1.7B` to sample the
+target for the same prompts.
+
+Generation primes the assistant turn with an empty `<think>` block, matching how the recipe
+formats its training data.
+
 ## Tracking
 
 Runs log to Weights & Biases when `wandb_project` is set, which `config/sft.toml` does and

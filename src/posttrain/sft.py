@@ -9,6 +9,7 @@ from trl import SFTConfig, SFTTrainer, clone_chat_template
 
 from posttrain.config import SftConfig
 from posttrain.data import load_sft
+from posttrain.device import resolve_device
 
 
 def run_sft(cfg: SftConfig) -> str:
@@ -92,9 +93,3 @@ def load_base(name: str, device: str) -> tuple[AutoModelForCausalLM, AutoTokeniz
         name, dtype=torch.bfloat16 if device == "cuda" else torch.float32
     )
     return model.to(device), AutoTokenizer.from_pretrained(name)
-
-
-def resolve_device() -> str:
-    if torch.cuda.is_available():
-        return "cuda"
-    return "mps" if torch.backends.mps.is_available() else "cpu"
