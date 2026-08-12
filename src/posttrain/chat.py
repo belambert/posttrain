@@ -20,22 +20,24 @@ def reply(
     """Generate one assistant turn for a conversation."""
     # enable_thinking=False matches training: the recipe's assistant turns are
     # prefixed with an empty <think> block, so priming keeps inference consistent
-    ids = tok.apply_chat_template(
+    enc = tok.apply_chat_template(
         messages,
         add_generation_prompt=True,
         enable_thinking=False,
         return_tensors="pt",
+        return_dict=True,
     ).to(model.device)
 
     out = model.generate(
-        ids,
+        **enc,
         max_new_tokens=max_new_tokens,
         do_sample=temperature > 0,
         temperature=temperature or None,
         top_p=0.95,
         pad_token_id=tok.pad_token_id,
     )
-    return tok.decode(out[0][ids.shape[1] :], skip_special_tokens=True).strip()
+    prompt_len = enc["input_ids"].shape[1]
+    return tok.decode(out[0][prompt_len:], skip_special_tokens=True).strip()
 
 
 def load_for_chat(path: str, device: str | None = None):
