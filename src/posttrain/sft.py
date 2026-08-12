@@ -5,6 +5,7 @@ import os
 import torch
 from torch.utils.data import SequentialSampler
 from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers.trainer_utils import get_last_checkpoint
 from trl import SFTConfig, SFTTrainer, clone_chat_template
 
 from posttrain.config import SftConfig
@@ -15,11 +16,22 @@ from posttrain.device import resolve_device
 def run_sft(cfg: SftConfig) -> str:
     """Run SFT and return the output dir."""
     trainer = build_trainer(cfg)
-    trainer.train()
+
+    ckpt = _last_checkpoint(cfg)
+    if ckpt:
+        print(f"resuming from {ckpt}")
+    trainer.train(resume_from_checkpoint=ckpt)
 
     trainer.save_model(cfg.out_dir)
     trainer.processing_class.save_pretrained(cfg.out_dir)
     return cfg.out_dir
+
+
+def _last_checkpoint(cfg: SftConfig) -> str | None:
+    """The full run spans days, so an interruption shouldn't cost the whole thing."""
+    if not cfg.resume or not os.path.isdir(cfg.out_dir):
+        return None
+    return get_last_checkpoint(cfg.out_dir)
 
 
 def build_trainer(cfg: SftConfig) -> SFTTrainer:
@@ -74,7 +86,7 @@ def _sft_config(cfg: SftConfig, device: str) -> SFTConfig:
         packing=False,
         train_sampling_strategy="group_by_length" if cfg.group_by_length else "random",
         assistant_only_loss=True,
-        gradient_checkpointing=True,
+        gradient_checkpointing=cfg.gradient_checkpointing,
         bf16=device == "cuda",
         logging_steps=cfg.logging_steps,
         eval_strategy="steps",

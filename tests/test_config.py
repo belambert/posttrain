@@ -44,6 +44,14 @@ def test_length_grouping_defaults_on_and_is_overridable():
     assert SftConfig.load(SFT_TOML, ["group_by_length=false"]).group_by_length is False
 
 
+def test_long_run_knobs_default_safe_and_override():
+    cfg = SftConfig.load(SFT_TOML)
+    assert cfg.resume is True and cfg.gradient_checkpointing is True
+
+    off = SftConfig.load(SFT_TOML, ["resume=false", "gradient_checkpointing=false"])
+    assert off.resume is False and off.gradient_checkpointing is False
+
+
 def test_wandb_is_opt_in():
     assert SftConfig.load(SFT_TOML).wandb_project == "posttrain"
     assert SftConfig.load(SMOKE_TOML).wandb_project is None

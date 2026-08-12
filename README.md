@@ -37,6 +37,21 @@ of version control:
 
     uv run posttrain sft -s lr=1e-5 -s n=50000
 
+## Resuming
+
+The full run spans days, so `posttrain sft` picks up from the newest checkpoint in
+`out_dir` automatically — rerun the same command after an interruption. Use
+`-s resume=false` to start over instead.
+
+Weights, optimizer, and scheduler resume exactly. Data ordering does not: the
+length-grouped sampler draws from the global RNG, and a resumed run restores RNG state
+from mid-epoch rather than from where the shuffle happened, so the remainder of that
+epoch is regrouped. Some examples repeat and others are skipped within it — negligible
+over 939k rows, but it means a resumed run is not bit-identical to an uninterrupted one.
+
+Checkpoints land every `save_steps` (200 by default, ~3.5 hours at the full run's pace)
+and `save_total_limit=2`, so an interruption costs at most one interval.
+
 ## Verifying before a long run
 
     uv run posttrain check
@@ -97,7 +112,8 @@ forces padding-free batching, which needs FlashAttention 2/3 kernels with no aar
 and the alternative `wrapped` strategy cuts mid-sequence and would corrupt the assistant
 mask. Grouping shrinks padding; only packing removes it.
 
-    uv run posttrain sft -s group_by_length=false   # to compare
+    uv run posttrain sft -s group_by_length=false          # to compare
+    uv run posttrain sft -s gradient_checkpointing=false   # ~30% faster if memory allows
 
 Grouping has two side effects worth knowing. Training loss develops a sawtooth: megabatches
 are sorted longest-first, so each one ends on short examples that carry few tokens and score
