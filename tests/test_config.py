@@ -52,6 +52,12 @@ def test_long_run_knobs_default_safe_and_override():
     assert off.resume is False and off.gradient_checkpointing is False
 
 
+def test_checkpoints_are_all_kept():
+    cfg = SftConfig.load(SFT_TOML)
+    assert cfg.save_total_limit is None
+    assert SftConfig.load(SFT_TOML, ["save_total_limit=2"]).save_total_limit == 2
+
+
 def test_wandb_is_opt_in():
     assert SftConfig.load(SFT_TOML).wandb_project == "posttrain"
     assert SftConfig.load(SMOKE_TOML).wandb_project is None

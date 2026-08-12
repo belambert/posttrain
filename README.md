@@ -49,8 +49,21 @@ from mid-epoch rather than from where the shuffle happened, so the remainder of 
 epoch is regrouped. Some examples repeat and others are skipped within it — negligible
 over 939k rows, but it means a resumed run is not bit-identical to an uninterrupted one.
 
-Checkpoints land every `save_steps` (200 by default, ~3.5 hours at the full run's pace)
-and `save_total_limit=2`, so an interruption costs at most one interval.
+## Checkpoints
+
+Every checkpoint is kept (`save_total_limit` unset). They are not small: weights are only
+3.4GB of the ~17.2GB, the rest being fp32 Adam state, which is what makes a resume exact.
+
+| `save_steps` | Checkpoints | Disk    | Interval |
+| -----------: | ----------: | ------: | -------: |
+| 200          | 73          | 1.26 TB | 3.5 h    |
+| 500          | 29          | 0.50 TB | 8.7 h    |
+| **1000**     | **14**      | **0.24 TB** | **17.4 h** |
+| 2000         | 7           | 0.12 TB | 34.8 h   |
+
+The default is 1000. The tradeoff is disk against how much work an interruption costs, since
+resume restarts from the last checkpoint. Set `-s save_total_limit=2` to keep only the two
+newest instead.
 
 ## Verifying before a long run
 

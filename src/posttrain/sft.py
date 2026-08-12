@@ -92,7 +92,7 @@ def _sft_config(cfg: SftConfig, device: str) -> SFTConfig:
         eval_strategy="steps",
         eval_steps=cfg.eval_steps,
         save_steps=cfg.save_steps,
-        save_total_limit=2,
+        save_total_limit=cfg.save_total_limit,
         seed=cfg.seed,
         report_to=["wandb"] if cfg.wandb_project else [],
         run_name=cfg.run_name,
