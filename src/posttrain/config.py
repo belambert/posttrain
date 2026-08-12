@@ -27,7 +27,7 @@ class SftConfig:
     max_length: int = 4096
     eval_n: int = 500
     eval_steps: int = 200
-    save_steps: int = 1000  # ~17GB a checkpoint, so not too often
+    save_steps: int = 200
     save_total_limit: int | None = None  # None keeps every checkpoint
     keep_optimizer_states: int = 2  # only the newest few need to be resumable
     logging_steps: int = 10

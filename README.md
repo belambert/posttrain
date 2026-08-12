@@ -61,13 +61,13 @@ leave the newest unusable.
 
 | `save_steps` | Checkpoints | Disk kept all | Disk pruned | Interval |
 | -----------: | ----------: | ------------: | ----------: | -------: |
-| 200          | 73          | 1.26 TB       | 0.28 TB     | 3.5 h    |
+| **200**      | **73**      | 1.26 TB       | **0.28 TB** | **3.5 h** |
 | 500          | 29          | 0.50 TB       | 0.13 TB     | 8.7 h    |
-| **1000**     | **14**      | 0.24 TB       | **0.08 TB** | **17.4 h** |
+| 1000         | 14          | 0.24 TB       | 0.08 TB     | 17.4 h   |
 | 2000         | 7           | 0.12 TB       | 0.05 TB     | 34.8 h   |
 
-The default is 1000, but pruning makes finer intervals affordable: `-s save_steps=200` costs
-0.28 TB and cuts the worst-case loss from an interruption to 3.5 hours. Set
+The default is 200, which pruning makes affordable: 0.28 TB for the full run, and an
+interruption costs at most 3.5 hours. Raise it if disk is tight. Set
 `-s keep_optimizer_states=0` to strip them all, giving up resume entirely.
 
 ## Verifying before a long run
