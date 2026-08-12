@@ -4,10 +4,11 @@ import os
 
 import torch
 from torch.utils.data import SequentialSampler
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, TrainerCallback
 from transformers.trainer_utils import get_last_checkpoint
 from trl import SFTConfig, SFTTrainer, clone_chat_template
 
+from posttrain.checkpoints import prune_optimizer_states
 from posttrain.config import SftConfig
 from posttrain.data import load_sft
 from posttrain.device import resolve_device
@@ -55,7 +56,19 @@ def build_trainer(cfg: SftConfig) -> SFTTrainer:
         train_dataset=train_ds,
         eval_dataset=eval_ds,
         processing_class=tok,
+        callbacks=[_PruneOptimizerStates(cfg.keep_optimizer_states)],
     )
+
+
+class _PruneOptimizerStates(TrainerCallback):
+    """Keep every model checkpoint, but optimizer state only on the newest few."""
+
+    def __init__(self, keep: int) -> None:
+        self.keep = keep
+
+    def on_save(self, args, state, control, **kwargs) -> None:
+        if freed := prune_optimizer_states(args.output_dir, self.keep):
+            print(f"pruned {freed / 1e9:.1f}GB of stale optimizer state")
 
 
 class _FixedEvalTrainer(SFTTrainer):

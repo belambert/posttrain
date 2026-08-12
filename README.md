@@ -54,16 +54,21 @@ over 939k rows, but it means a resumed run is not bit-identical to an uninterrup
 Every checkpoint is kept (`save_total_limit` unset). They are not small: weights are only
 3.4GB of the ~17.2GB, the rest being fp32 Adam state, which is what makes a resume exact.
 
-| `save_steps` | Checkpoints | Disk    | Interval |
-| -----------: | ----------: | ------: | -------: |
-| 200          | 73          | 1.26 TB | 3.5 h    |
-| 500          | 29          | 0.50 TB | 8.7 h    |
-| **1000**     | **14**      | **0.24 TB** | **17.4 h** |
-| 2000         | 7           | 0.12 TB | 34.8 h   |
+Only the two newest carry optimizer state — `keep_optimizer_states`, pruned after each save.
+Older checkpoints keep their weights and stay loadable by `posttrain chat`; they just can't
+be resumed from, which nothing needs. Two rather than one because a crash mid-write can
+leave the newest unusable.
 
-The default is 1000. The tradeoff is disk against how much work an interruption costs, since
-resume restarts from the last checkpoint. Set `-s save_total_limit=2` to keep only the two
-newest instead.
+| `save_steps` | Checkpoints | Disk kept all | Disk pruned | Interval |
+| -----------: | ----------: | ------------: | ----------: | -------: |
+| 200          | 73          | 1.26 TB       | 0.28 TB     | 3.5 h    |
+| 500          | 29          | 0.50 TB       | 0.13 TB     | 8.7 h    |
+| **1000**     | **14**      | 0.24 TB       | **0.08 TB** | **17.4 h** |
+| 2000         | 7           | 0.12 TB       | 0.05 TB     | 34.8 h   |
+
+The default is 1000, but pruning makes finer intervals affordable: `-s save_steps=200` costs
+0.28 TB and cuts the worst-case loss from an interruption to 3.5 hours. Set
+`-s keep_optimizer_states=0` to strip them all, giving up resume entirely.
 
 ## Verifying before a long run
 

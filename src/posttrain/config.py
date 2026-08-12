@@ -29,6 +29,7 @@ class SftConfig:
     eval_steps: int = 200
     save_steps: int = 1000  # ~17GB a checkpoint, so not too often
     save_total_limit: int | None = None  # None keeps every checkpoint
+    keep_optimizer_states: int = 2  # only the newest few need to be resumable
     logging_steps: int = 10
     group_by_length: bool = True  # batch similar lengths so padding stays tight
     gradient_checkpointing: bool = True  # ~30% slower, much cheaper on memory
