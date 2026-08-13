@@ -1,0 +1,19 @@
+# Benchmarks for comparing a checkpoint against Qwen's own post-train.
+# Few-shot counts after the pipe follow the conventional setting for each task.
+
+checkpoints = "runs/sft"
+stride = 10          # every 10th checkpoint; the newest is always included
+baseline = "Qwen/Qwen3-1.7B"
+
+out_dir = "runs/evals"
+batch_size = 8
+
+tasks = [
+    "ifeval|0",          # instruction following — most sensitive to SFT quality
+    "gsm8k|5",           # grade-school math
+    "mmlu|5",            # knowledge, all 57 subjects
+    "bigbench_hard|3",   # multi-step reasoning, 27 subtasks
+    "truthfulqa:mc|0",   # factuality
+    "math_500|4",        # competition math
+    "gpqa:diamond|0",    # graduate-level science
+]

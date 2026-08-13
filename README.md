@@ -91,6 +91,36 @@ target for the same prompts.
 Generation primes the assistant turn with an empty `<think>` block, matching how the recipe
 formats its training data.
 
+## Benchmarks
+
+Evaluation is a separate step so it never competes with training for the GPU. It needs an
+extra install, since lighteval pulls in `inspect-ai` and a large task surface:
+
+    uv sync --extra eval
+    uv run posttrain eval
+
+That benchmarks every 10th checkpoint plus `Qwen/Qwen3-1.7B`, then prints a table of every
+score side by side. Which checkpoints and which tasks are config:
+
+    uv run posttrain eval -s stride=1                  # every checkpoint
+    uv run posttrain eval -s checkpoints=runs/pilot    # a different run
+    uv run posttrain eval -s tasks=ifeval|0            # one benchmark
+    uv run posttrain eval -s max_samples=16            # smoke-test the harness
+
+| Task              | Measures                              |
+| ----------------- | ------------------------------------- |
+| `ifeval`          | Instruction following — most sensitive to SFT quality |
+| `gsm8k`           | Grade-school math                     |
+| `mmlu`            | Knowledge, all 57 subjects            |
+| `bigbench_hard`   | Multi-step reasoning, 27 subtasks     |
+| `truthfulqa:mc`   | Factuality                            |
+| `math_500`        | Competition math                      |
+| `gpqa:diamond`    | Graduate-level science                |
+
+The number after the pipe is the few-shot count. `stride` defaults to 10 because a full
+sweep is a large amount of compute — the newest checkpoint is always included whatever the
+stride, and passing a directory with no `checkpoint-*` subdirectories evaluates it directly.
+
 ## Tracking
 
 Runs log to Weights & Biases when `wandb_project` is set, which `config/sft.toml` does and

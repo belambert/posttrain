@@ -13,7 +13,7 @@ OPTIMIZER_FILES = ("optimizer.pt", "optimizer.bin", "scaler.pt")
 
 def prune_optimizer_states(out_dir: str | Path, keep: int = 2) -> int:
     """Drop optimizer state from all but the `keep` newest checkpoints; bytes freed."""
-    ckpts = sorted(Path(out_dir).glob("checkpoint-*"), key=_step)
+    ckpts = sorted(Path(out_dir).glob("checkpoint-*"), key=step_of)
     stale = ckpts[:-keep] if keep else ckpts
 
     freed = 0
@@ -27,7 +27,7 @@ def prune_optimizer_states(out_dir: str | Path, keep: int = 2) -> int:
     return freed
 
 
-def _step(path: Path) -> int:
+def step_of(path: Path) -> int:
     """Sort by step number — lexicographically, checkpoint-900 sorts after 1000."""
     m = re.search(r"checkpoint-(\d+)$", path.name)
     return int(m.group(1)) if m else -1

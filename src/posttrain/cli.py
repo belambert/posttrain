@@ -4,7 +4,7 @@ from typing import Annotated
 
 import typer
 
-from posttrain.config import SftConfig
+from posttrain.config import EvalConfig, SftConfig
 
 app = typer.Typer(help="Post-train Qwen3-1.7B-Base.", no_args_is_help=True)
 
@@ -29,6 +29,28 @@ def sft(config: str = "config/sft.toml", set_: SetOpt = []) -> None:
     from posttrain.sft import run_sft  # deferred so --help does not import torch
 
     run_sft(cfg)
+
+
+@app.command("eval")
+def eval_(config: str = "config/eval.toml", set_: SetOpt = []) -> None:
+    """Benchmark checkpoints with lighteval, then print a comparison table."""
+    from posttrain.evaluate import collect_results, run_eval
+
+    cfg = EvalConfig.load(config, set_)
+    run_eval(cfg)
+    _print_scores(collect_results(cfg.out_dir))
+
+
+def _print_scores(table: dict[str, dict[str, float]]) -> None:
+    tasks = sorted({t for scores in table.values() for t in scores})
+    if not tasks:
+        typer.secho("no results found", fg=typer.colors.RED)
+        return
+
+    typer.secho(f"\n{'model':<40}" + "".join(f"{t[:22]:>24}" for t in tasks), bold=True)
+    for model, scores in table.items():
+        cells = "".join(f"{scores.get(t, float('nan')):>24.4f}" for t in tasks)
+        typer.echo(f"{model[-39:]:<40}{cells}")
 
 
 @app.command()

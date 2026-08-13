@@ -18,6 +18,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# lighteval pulls in inspect-ai and a large task-dataset surface, so it stays out
+# of the training environment
+eval = [
+    "lighteval[extended-tasks,math]>=0.13",
+]
 dev = [
     "black>=24.0",
     "isort>=5.13",
