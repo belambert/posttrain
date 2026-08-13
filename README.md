@@ -117,6 +117,17 @@ which is the single source of truth for the schema — unknown keys in either th
 | `config/pilot.toml` | 50k examples, 1 epoch — a real loss curve and a throughput number.  |
 | `config/sft.toml`   | The Tulu 3 recipe: 2 epochs, lr 5e-6, effective batch 128.          |
 
+## Startup
+
+Tokenizing, truncating, and filtering 939k rows happens before step one and is
+single-threaded by default. `dataset_num_proc` parallelises it and defaults to every core;
+set it explicitly to cap that:
+
+    uv run posttrain sft -s dataset_num_proc=8
+
+`datasets` caches the result, so a second run on the same machine skips the work entirely —
+this is a first-run and after-a-config-change cost, not a per-run one.
+
 ## Throughput
 
 Batches pad to the longest example in them, and the Tulu mixture is wildly uneven — most

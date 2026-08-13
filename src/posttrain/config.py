@@ -31,6 +31,7 @@ class SftConfig:
     save_total_limit: int | None = None  # None keeps every checkpoint
     keep_optimizer_states: int = 2  # only the newest few need to be resumable
     logging_steps: int = 10
+    dataset_num_proc: int | None = None  # None uses every core
     group_by_length: bool = True  # batch similar lengths so padding stays tight
     gradient_checkpointing: bool = True  # ~30% slower, much cheaper on memory
     resume: bool = True  # pick up from the last checkpoint in out_dir

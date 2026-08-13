@@ -58,6 +58,12 @@ def test_checkpoints_are_all_kept():
     assert SftConfig.load(SFT_TOML, ["save_total_limit=2"]).save_total_limit == 2
 
 
+def test_tokenization_parallelism():
+    assert SftConfig.load(SFT_TOML).dataset_num_proc is None  # auto: every core
+    assert SftConfig.load(SMOKE_TOML).dataset_num_proc == 1
+    assert SftConfig.load(SFT_TOML, ["dataset_num_proc=4"]).dataset_num_proc == 4
+
+
 def test_wandb_is_opt_in():
     assert SftConfig.load(SFT_TOML).wandb_project == "posttrain"
     assert SftConfig.load(SMOKE_TOML).wandb_project is None

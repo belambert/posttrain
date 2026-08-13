@@ -97,6 +97,8 @@ def _sft_config(cfg: SftConfig, device: str) -> SFTConfig:
         # needs FlashAttention 2/3 kernels that have no aarch64 build. Grouping by
         # length is the substitute — it can't remove padding, only shrink it.
         packing=False,
+        # tokenizing 939k rows single-threaded is a long wait before step one
+        dataset_num_proc=cfg.dataset_num_proc or os.cpu_count() or 1,
         train_sampling_strategy="group_by_length" if cfg.group_by_length else "random",
         assistant_only_loss=True,
         gradient_checkpointing=cfg.gradient_checkpointing,

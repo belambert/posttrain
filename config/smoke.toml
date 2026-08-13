@@ -4,6 +4,7 @@ out_dir = "runs/smoke"
 
 n = 64
 eval_n = 8
+dataset_num_proc = 1  # spawning a worker per core costs more than it saves at this size
 epochs = 1.0
 batch_size = 1
 grad_accum = 4
