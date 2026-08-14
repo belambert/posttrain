@@ -27,12 +27,12 @@ def run_eval(cfg: EvalConfig) -> tuple[list[str], list[str]]:
 
     done, failed = [], []
     for model in models:
-        print(f"\n=== evaluating {model}")
+        print(f"\n=== evaluating {model}", flush=True)  # subprocess writes unbuffered
         try:
             subprocess.run(_command(model, cfg, device), check=True)
             done.append(model)
         except subprocess.CalledProcessError as e:
-            print(f"!!! {model} failed (exit {e.returncode}), continuing")
+            print(f"!!! {model} failed (exit {e.returncode}), continuing", flush=True)
             failed.append(model)
 
     return done, failed
@@ -64,6 +64,9 @@ def collect_results(out_dir: str | Path) -> dict[str, dict[str, float]]:
 
         scores = table.setdefault(model, {})
         for task, metrics in data.get("results", {}).items():
+            if task == "all":
+                continue  # lighteval's own cross-task aggregate, duplicating the rest
+
             for name, value in metrics.items():
                 if isinstance(value, (int, float)) and not name.endswith("_stderr"):
                     scores[f"{task}:{name}"] = float(value)

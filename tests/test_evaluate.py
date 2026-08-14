@@ -89,6 +89,25 @@ def test_command_avoids_bf16_off_cuda():
     assert "dtype=float32" in _command("m", EvalConfig(), "mps")[2]
 
 
+def test_collect_results_drops_the_all_aggregate(tmp_path):
+    """lighteval emits an 'all' row that repeats every per-task metric."""
+    run = tmp_path / "run"
+    run.mkdir()
+    (run / "results_2026.json").write_text(
+        json.dumps(
+            {
+                "config_general": {"model_name": "ckpt"},
+                "results": {
+                    "all": {"acc": 0.61},
+                    "gpqa:mc|0": {"acc": 0.25},
+                },
+            }
+        )
+    )
+
+    assert collect_results(tmp_path) == {"ckpt": {"gpqa:mc|0:acc": 0.25}}
+
+
 def test_collect_results_skips_stderr(tmp_path):
     run = tmp_path / "run"
     run.mkdir()

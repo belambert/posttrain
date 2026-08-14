@@ -46,15 +46,33 @@ def eval_(config: str = "config/eval.toml", set_: SetOpt = []) -> None:
 
 
 def _print_scores(table: dict[str, dict[str, float]]) -> None:
-    tasks = sorted({t for scores in table.values() for t in scores})
-    if not tasks:
+    """One row per metric, one column per model.
+
+    Transposed relative to the obvious layout: there are many more metrics than
+    models, and reading a checkpoint against the baseline means comparing across
+    a row.
+    """
+    metrics = sorted({m for scores in table.values() for m in scores})
+    if not metrics:
         typer.secho("no results found", fg=typer.colors.RED)
         return
 
-    typer.secho(f"\n{'model':<40}" + "".join(f"{t[:22]:>24}" for t in tasks), bold=True)
-    for model, scores in table.items():
-        cells = "".join(f"{scores.get(t, float('nan')):>24.4f}" for t in tasks)
-        typer.echo(f"{model[-39:]:<40}{cells}")
+    models = list(table)
+    width = max(len(m) for m in metrics) + 2
+    header = f"{'metric':<{width}}" + "".join(f"{_short(m):>20}" for m in models)
+
+    typer.secho(f"\n{header}", bold=True)
+    for metric in metrics:
+        cells = ""
+        for model in models:
+            score = table[model].get(metric)
+            cells += f"{score:>20.4f}" if score is not None else f"{'—':>20}"
+        typer.echo(f"{metric:<{width}}{cells}")
+
+
+def _short(model: str) -> str:
+    """Trim runs/sft/checkpoint-1400 down to something that fits a column."""
+    return model.rstrip("/").split("/")[-1][:19]
 
 
 @app.command()
