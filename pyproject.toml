@@ -22,6 +22,9 @@ dependencies = [
 # of the training environment
 eval = [
     "lighteval[extended-tasks,math]>=0.13",
+    # lighteval hashes str directly (info_loggers.py: xxh64(doc.query)); xxhash 4.0
+    # made that a TypeError, which kills every run after inference finishes
+    "xxhash<4",
 ]
 dev = [
     "black>=24.0",

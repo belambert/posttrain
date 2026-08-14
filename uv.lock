@@ -2301,6 +2301,7 @@ dev = [
 ]
 eval = [
     { name = "lighteval", extra = ["extended-tasks", "math"] },
+    { name = "xxhash" },
 ]
 
 [package.metadata]
@@ -2318,6 +2319,7 @@ requires-dist = [
     { name = "trl", specifier = ">=1.9" },
     { name = "typer", specifier = ">=0.15" },
     { name = "wandb", specifier = ">=0.18" },
+    { name = "xxhash", marker = "extra == 'eval'", specifier = "<4" },
 ]
 provides-extras = ["eval", "dev"]
 

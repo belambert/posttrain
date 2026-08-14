@@ -37,8 +37,12 @@ def eval_(config: str = "config/eval.toml", set_: SetOpt = []) -> None:
     from posttrain.evaluate import collect_results, run_eval
 
     cfg = EvalConfig.load(config, set_)
-    run_eval(cfg)
+    _, failed = run_eval(cfg)
     _print_scores(collect_results(cfg.out_dir))
+
+    if failed:
+        typer.secho(f"\n{len(failed)} failed: {', '.join(failed)}", fg=typer.colors.RED)
+        raise typer.Exit(1)
 
 
 def _print_scores(table: dict[str, dict[str, float]]) -> None:

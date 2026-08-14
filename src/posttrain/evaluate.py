@@ -13,18 +13,29 @@ from posttrain.config import EvalConfig
 from posttrain.device import resolve_device
 
 
-def run_eval(cfg: EvalConfig) -> list[str]:
-    """Benchmark the selected checkpoints; returns the model names evaluated."""
+def run_eval(cfg: EvalConfig) -> tuple[list[str], list[str]]:
+    """Benchmark the selected checkpoints; returns (evaluated, failed).
+
+    One model failing does not abort the sweep — across a dozen checkpoints and
+    several hours, losing the finished results to a late failure is worse than
+    reporting the gap.
+    """
     device = cfg.device or resolve_device()
     models = [str(p) for p in select_checkpoints(cfg.checkpoints, cfg.stride)]
     if cfg.baseline:
         models.append(cfg.baseline)
 
+    done, failed = [], []
     for model in models:
         print(f"\n=== evaluating {model}")
-        subprocess.run(_command(model, cfg, device), check=True)
+        try:
+            subprocess.run(_command(model, cfg, device), check=True)
+            done.append(model)
+        except subprocess.CalledProcessError as e:
+            print(f"!!! {model} failed (exit {e.returncode}), continuing")
+            failed.append(model)
 
-    return models
+    return done, failed
 
 
 def select_checkpoints(root: str | Path, stride: int) -> list[Path]:

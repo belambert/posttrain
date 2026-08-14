@@ -1,7 +1,13 @@
 import json
+import subprocess
 
 from posttrain.config import EvalConfig
-from posttrain.evaluate import _command, collect_results, select_checkpoints
+from posttrain.evaluate import (
+    _command,
+    collect_results,
+    run_eval,
+    select_checkpoints,
+)
 
 
 def make_ckpts(root, steps):
@@ -48,6 +54,24 @@ def test_fast_config_is_actually_fast():
     assert not any(
         t.startswith("mmlu|") or t.startswith("bigbench_hard|") for t in cfg.tasks
     )
+
+
+def test_one_failure_does_not_abort_the_sweep(tmp_path, monkeypatch):
+    make_ckpts(tmp_path, [100, 200])
+    calls = []
+
+    def fake_run(cmd, check):
+        calls.append(cmd)
+        if "checkpoint-200" in cmd[2]:
+            raise subprocess.CalledProcessError(1, cmd)
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    done, failed = run_eval(
+        EvalConfig(checkpoints=str(tmp_path), stride=1, baseline=None)
+    )
+
+    assert len(calls) == 2  # the second still ran after the first failed
+    assert len(done) == 1 and len(failed) == 1
 
 
 def test_command_shape():
