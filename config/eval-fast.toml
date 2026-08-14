@@ -1,0 +1,21 @@
+# Fast subset: for checking the harness works, and for iterating on a checkpoint.
+#
+# Picked to avoid the two things that make the full suite slow. Nothing here uses the
+# 32768-token generation caps that math_500 and gpqa:diamond carry for reasoning models,
+# and the 14k-item MMLU sweep and 27-subtask BBH are each stood in for by one subtask.
+# max_samples caps everything else.
+
+checkpoints = "runs/pilot"
+baseline = "none"  # set to Qwen/Qwen3-1.7B once the harness is known to work
+out_dir = "runs/evals-fast"
+
+batch_size = 8
+max_samples = 100
+
+tasks = [
+    "ifeval|0",                          # 1280-token cap, the slowest here but the point
+    "truthfulqa:mc|0",                   # loglikelihood only, generates nothing
+    "gpqa:mc|0",                         # 1-token generation
+    "mmlu:abstract_algebra|5",           # one subject, standing in for all 57
+    "bigbench_hard:date_understanding|3",  # one subtask, standing in for all 27
+]

@@ -37,6 +37,19 @@ def test_plain_dir_is_its_own_checkpoint(tmp_path):
     assert select_checkpoints(tmp_path, stride=10) == [tmp_path]
 
 
+def test_fast_config_is_actually_fast():
+    """Nothing here may carry the 32k generation caps meant for reasoning models."""
+    cfg = EvalConfig.load("config/eval-fast.toml")
+
+    assert cfg.baseline is None  # TOML "none" must become None, not the string
+    assert cfg.max_samples == 100
+    for task in cfg.tasks:
+        assert not task.startswith(("math_500", "gpqa:diamond", "gpqa:main"))
+    assert not any(
+        t.startswith("mmlu|") or t.startswith("bigbench_hard|") for t in cfg.tasks
+    )
+
+
 def test_command_shape():
     cfg = EvalConfig(tasks=["ifeval|0", "gsm8k|5"], batch_size=4, max_samples=8)
     cmd = _command("runs/sft/checkpoint-200", cfg, "cuda")

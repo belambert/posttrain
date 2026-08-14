@@ -49,6 +49,11 @@ class EvalConfig(TomlConfig):
     max_samples: int | None = None  # cap per task, for smoke-testing the harness
     device: str | None = None
 
+    def __post_init__(self) -> None:
+        # TOML has no null, so "none" is how a config file switches the baseline off
+        if isinstance(self.baseline, str) and self.baseline.lower() in ("none", ""):
+            self.baseline = None
+
 
 @dataclass
 class SftConfig(TomlConfig):

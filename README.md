@@ -102,10 +102,10 @@ extra install, since lighteval pulls in `inspect-ai` and a large task surface:
 That benchmarks every 10th checkpoint plus `Qwen/Qwen3-1.7B`, then prints a table of every
 score side by side. Which checkpoints and which tasks are config:
 
-    uv run posttrain eval -s stride=1                  # every checkpoint
-    uv run posttrain eval -s checkpoints=runs/pilot    # a different run
-    uv run posttrain eval -s tasks=ifeval|0            # one benchmark
-    uv run posttrain eval -s max_samples=16            # smoke-test the harness
+    uv run posttrain eval --config config/eval-fast.toml   # quick subset, see below
+    uv run posttrain eval -s stride=1                      # every checkpoint
+    uv run posttrain eval -s checkpoints=runs/pilot/checkpoint-300
+    uv run posttrain eval -s "tasks=ifeval|0"              # quote: | is a shell pipe
 
 | Task              | Measures                              |
 | ----------------- | ------------------------------------- |
@@ -120,6 +120,26 @@ score side by side. Which checkpoints and which tasks are config:
 The number after the pipe is the few-shot count. `stride` defaults to 10 because a full
 sweep is a large amount of compute — the newest checkpoint is always included whatever the
 stride, and passing a directory with no `checkpoint-*` subdirectories evaluates it directly.
+
+### The fast subset
+
+`config/eval-fast.toml` is minutes rather than hours, for checking the harness works and for
+iterating. It avoids the two things that make the full suite slow:
+
+| Full suite      | Fast subset                           | Why                                    |
+| --------------- | ------------------------------------- | -------------------------------------- |
+| `math_500`, `gpqa:diamond` | dropped, `gpqa:mc` instead | Those cap generation at 32768 tokens, sized for reasoning models. `gpqa:mc` generates 1. |
+| `mmlu` (14,042) | `mmlu:abstract_algebra`               | One subject instead of 57              |
+| `bigbench_hard` (27 subtasks) | `bigbench_hard:date_understanding` | One subtask instead of 27 |
+| —               | `truthfulqa:mc`                       | Kept: loglikelihood only, generates nothing |
+| —               | `ifeval`                              | Kept: the signal most sensitive to SFT quality |
+
+It also sets `max_samples = 100` and `baseline = "none"`. Turn the baseline back on once the
+harness is known to work — `"none"` is how a TOML file expresses null here.
+
+The 32768-token caps are worth understanding before running the full suite. If a checkpoint
+does not reliably emit `<|im_end|>`, those tasks generate to the cap on every sample and a
+ten-minute task becomes an all-day one.
 
 ## Tracking
 
