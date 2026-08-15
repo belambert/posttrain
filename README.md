@@ -43,6 +43,13 @@ The full run spans days, so `posttrain sft` picks up from the newest checkpoint 
 `out_dir` automatically — rerun the same command after an interruption. Use
 `-s resume=false` to start over instead.
 
+It resumes from the newest *complete* checkpoint, not simply the newest. A run killed
+mid-save — spot preemption, a power cut — leaves a directory with the highest step number
+and truncated files inside, so resuming blindly would load a broken checkpoint. Each
+candidate is checked for its resume files, a parseable `trainer_state.json`, and weights
+whose safetensors header agrees with the file size; the first one that passes wins, and
+skipped ones are named on stdout.
+
 Weights, optimizer, and scheduler resume exactly. Data ordering does not: the
 length-grouped sampler draws from the global RNG, and a resumed run restores RNG state
 from mid-epoch rather than from where the shuffle happened, so the remainder of that
