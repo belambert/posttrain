@@ -1,0 +1,40 @@
+# Build the training image, reusing the previous one's layers.
+#
+# `gcloud builds submit --tag` would work too, but every build gets a fresh
+# worker with an empty cache, so it reinstalls several GB of torch each time —
+# 13 minutes for a one-line source change. Pulling the last image and passing it
+# as --cache-from makes the dependency layer reusable, which is the only reason
+# the Dockerfile installs dependencies before copying src.
+
+steps:
+  # `|| true`: there is no previous image on the very first build, and that is
+  # not a failure
+  - id: pull-cache
+    name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    args: ["-c", "docker pull $_IMAGE:latest || true"]
+
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --cache-from=$_IMAGE:latest
+      - --tag=$_IMAGE:$_TAG
+      - --tag=$_IMAGE:latest
+      - .
+
+images:
+  - $_IMAGE:$_TAG
+  - $_IMAGE:latest
+
+substitutions:
+  _IMAGE: us-central1-docker.pkg.dev/dev-proj-505900/posttrain/posttrain
+  # overridden with the git SHA when it matters which code a run used
+  _TAG: dev
+
+options:
+  # this project has no legacy Cloud Build service account, so builds run as the
+  # Compute Engine default one, which cannot write to Google's own logs bucket
+  defaultLogsBucketBehavior: REGIONAL_USER_OWNED_BUCKET
+
+timeout: 1800s

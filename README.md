@@ -64,10 +64,16 @@ service account — is Terraform in the `gcp-infra` repo. What lives here is the
 that builds the image and `deploy/smoke.yaml`, the job that uses it.
 
 Build and push. Cloud Build rather than local Docker because the VM is x86 and a Mac is
-not, and emulating a torch install is slow enough to notice:
+not, and emulating a torch install is slow enough to notice. `cloudbuild.yaml` at the root
+is picked up automatically:
 
     gcloud builds submit --region=us-central1 \
-      --tag=us-central1-docker.pkg.dev/dev-proj-505900/posttrain/posttrain:latest
+      --substitutions=_TAG=$(git rev-parse --short HEAD)
+
+That tags the image both with the commit and as `latest`. Tagging with the commit is what
+makes a checkpoint traceable back to the code that produced it, which matters as soon as
+two runs are being compared. Omit the substitution for a throwaway build and it lands as
+`dev`.
 
 Submit the smoke run — job names must be unique, hence the timestamp:
 
@@ -82,6 +88,22 @@ Watch it, and read what it printed:
       --location=us-central1 --format='value(uid)')" --format='value(textPayload)'
 
 Checkpoints land in `gs://bel-posttrain/runs/smoke`.
+
+### What needs a rebuild
+
+Only what is baked into the image. Everything the job passes on the command line is read at
+submit time, so most experiments cost a resubmit rather than a build:
+
+| Change                                      | Rebuild? |
+| ------------------------------------------- | -------- |
+| `src/`, `config/`, `pyproject.toml`         | Yes      |
+| Hyperparameters, via `--set` in `commands`  | No       |
+| Machine type, Spot, disk, retry policy      | No       |
+| Which config file the job runs              | No       |
+
+A rebuild after a source-only change reuses the cached dependency layer and takes a minute
+or two. The first build, or any change to `pyproject.toml` or `uv.lock`, reinstalls several
+GB of torch and takes upwards of thirteen.
 
 `deploy/smoke.yaml` pins the four decisions worth knowing:
 
