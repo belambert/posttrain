@@ -1,0 +1,51 @@
+# Smoke run on GCP Batch: 64 examples on one L4, writing checkpoints to GCS.
+#
+# This proves the whole path works — image, GPU, bucket, resume — without
+# committing a GPU for hours. A real run is this file with a different config
+# and a longer maxRunDuration.
+
+taskGroups:
+  - taskCount: 1
+    taskSpec:
+      runnables:
+        - container:
+            imageUri: us-central1-docker.pkg.dev/dev-proj-505900/posttrain/posttrain:latest
+            entrypoint: posttrain
+            commands:
+              - sft
+              - --config
+              - /app/config/smoke.toml # absolute: the runnable's workdir is not ours to assume
+              - --set
+              - out_dir=/mnt/disks/ckpt/runs/smoke
+
+      # gcsfuse, so out_dir is an ordinary path as far as the trainer is concerned
+      volumes:
+        - gcs:
+            remotePath: bel-posttrain
+          mountPath: /mnt/disks/ckpt
+
+      # a preempted task restarts from scratch, and resume picks up the newest
+      # complete checkpoint off the bucket — which is the point of running on Spot
+      maxRetryCount: 3
+      maxRunDuration: 3600s
+      lifecyclePolicies:
+        - action: RETRY_TASK
+          actionCondition:
+            exitCodes: [50001] # Spot preemption
+
+allocationPolicy:
+  instances:
+    - installGpuDrivers: true # adds a few minutes to startup
+      policy:
+        machineType: g2-standard-8 # 8 vCPU, 32GB, one L4
+        provisioningModel: SPOT
+        bootDisk:
+          # the image is several GB of torch, and HF_HOME caches the model and
+          # the tokenized dataset alongside it
+          sizeGb: 200
+          type: pd-balanced
+  serviceAccount:
+    email: posttrain-batch@dev-proj-505900.iam.gserviceaccount.com
+
+logsPolicy:
+  destination: CLOUD_LOGGING
