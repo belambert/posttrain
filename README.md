@@ -219,6 +219,32 @@ The 32768-token caps are worth understanding before running the full suite. If a
 does not reliably emit `<|im_end|>`, those tasks generate to the cap on every sample and a
 ten-minute task becomes an all-day one.
 
+### Fast-subset results
+
+A `config/eval-fast.toml` sweep across the SFT run's checkpoints:
+
+![Fast-subset eval results](docs/eval-fast-results.png)
+
+| checkpoint | bbh_date | gpqa | ifeval_prompt_str | ifeval_inst_str | ifeval_prompt_loose | ifeval_inst_loose | mmlu_algebra | tqa_mc1 | tqa_mc2 |
+|-----------:|---------:|-----:|-------------------:|-----------------:|---------------------:|---------------------:|-------------:|--------:|--------:|
+| 200        | 0.8500   | 0.2600 | 0.1600            | 0.2690           | 0.1900               | 0.3034               | 0.0000       | 0.3100  | 0.5525  |
+| 300        | 0.9600   | 0.1600 | 0.2300            | 0.3448           | 0.2900               | 0.4000               | 0.0000       | 0.3900  | 0.5358  |
+| 385        | 0.9700   | 0.2600 | 0.2700            | 0.3655           | 0.3300               | 0.4138               | 0.0000       | 0.3900  | 0.5381  |
+| 1400       | 0.9700   | 0.2500 | 0.3500            | 0.4138           | 0.3700               | 0.4414               | 0.0200       | 0.3400  | 0.4607  |
+| 2000       | 0.9700   | 0.1700 | 0.3700            | 0.4621           | 0.3900               | 0.4759               | 0.2500       | 0.3100  | 0.4513  |
+| 2200       | 0.9700   | 0.2500 | 0.3600            | 0.4690           | 0.3900               | 0.4897               | 0.2800       | 0.3100  | 0.4488  |
+| 4200       | 0.9700   | 0.2600 | 0.4400            | 0.5379           | 0.4500               | 0.5448               | 0.2800       | 0.3200  | 0.4486  |
+| 6200       | 0.9700   | 0.3100 | 0.4300            | 0.5172           | 0.4600               | 0.5379               | 0.2800       | 0.3200  | 0.4517  |
+| 8200       | 0.9700   | 0.1600 | 0.4400            | 0.5241           | 0.4600               | 0.5379               | 0.2800       | 0.3200  | 0.4553  |
+| 10200      | 0.9700   | 0.1600 | 0.4100            | 0.4828           | 0.4300               | 0.4966               | 0.2900       | 0.3200  | 0.4528  |
+| 12200      | 0.9700   | 0.2600 | 0.4300            | 0.4897           | 0.4500               | 0.5103               | 0.2900       | 0.3200  | 0.4508  |
+| 14200      | 0.9700   | 0.3100 | 0.4100            | 0.4759           | 0.4400               | 0.5034               | 0.2900       | 0.3300  | 0.4524  |
+| 14604      | 0.9700   | 0.3100 | 0.4100            | 0.5034           | 0.4500               | 0.5379               | 0.2900       | 0.3200  | 0.4544  |
+
+`ifeval` climbs steadily with training; `mmlu:abstract_algebra` jumps from 0 to ~0.29 within
+the first ~2k steps and then plateaus; `truthfulqa` mc1/mc2 both drift down slightly over the
+run rather than improving.
+
 ## Tracking
 
 Runs log to Weights & Biases when `wandb_project` is set, which `config/sft.toml` does and
