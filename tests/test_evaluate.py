@@ -67,7 +67,7 @@ def test_one_failure_does_not_abort_the_sweep(tmp_path, monkeypatch):
 
     monkeypatch.setattr(subprocess, "run", fake_run)
     done, failed = run_eval(
-        EvalConfig(checkpoints=str(tmp_path), stride=1, baseline=None)
+        EvalConfig(checkpoints=str(tmp_path), stride=1, baseline=None, device="cpu")
     )
 
     assert len(calls) == 2  # the second still ran after the first failed
