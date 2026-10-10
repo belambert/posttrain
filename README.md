@@ -177,11 +177,11 @@ extra install, since lighteval pulls in `inspect-ai` and a large task surface:
     uv sync --extra eval
     uv run posttrain eval
 
-That benchmarks every 10th checkpoint plus `Qwen/Qwen3-1.7B`, then prints a table of every
+That benchmarks every checkpoint plus `Qwen/Qwen3-1.7B`, then prints a table of every
 score side by side. Which checkpoints and which tasks are config:
 
     uv run posttrain eval --config config/eval-fast.toml   # quick subset, see below
-    uv run posttrain eval -s stride=1                      # every checkpoint
+    uv run posttrain eval -s stride=2                      # every other checkpoint
     uv run posttrain eval -s checkpoints=runs/pilot/checkpoint-300
     uv run posttrain eval -s "tasks=ifeval|0"              # quote: | is a shell pipe
 
@@ -195,9 +195,10 @@ score side by side. Which checkpoints and which tasks are config:
 | `math_500`        | Competition math                      |
 | `gpqa:diamond`    | Graduate-level science                |
 
-The number after the pipe is the few-shot count. `stride` defaults to 10 because a full
-sweep is a large amount of compute — the newest checkpoint is always included whatever the
-stride, and passing a directory with no `checkpoint-*` subdirectories evaluates it directly.
+The number after the pipe is the few-shot count. `stride` thins the sweep when a run keeps
+more checkpoints than are worth benchmarking — the newest checkpoint is always included
+whatever the stride, and passing a directory with no `checkpoint-*` subdirectories
+evaluates it directly.
 
 ### The fast subset
 

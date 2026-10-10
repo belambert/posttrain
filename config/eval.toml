@@ -2,7 +2,6 @@
 # Few-shot counts after the pipe follow the conventional setting for each task.
 
 checkpoints = "runs/sft"
-stride = 10          # every 10th checkpoint; the newest is always included
 baseline = "Qwen/Qwen3-1.7B"
 
 out_dir = "runs/evals"

@@ -41,7 +41,7 @@ class EvalConfig(TomlConfig):
     """Which checkpoints to benchmark, and with what."""
 
     checkpoints: str = "runs/sft"  # a checkpoint dir, or one containing checkpoint-*
-    stride: int = 10  # evaluate every Nth checkpoint; the last is always included
+    stride: int = 1  # evaluate every Nth checkpoint; the last is always included
     baseline: str | None = INSTRUCT  # the model this project is measured against
     tasks: list[str] = field(default_factory=lambda: list(DEFAULT_TASKS))
     out_dir: str = "runs/evals"
