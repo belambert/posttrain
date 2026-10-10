@@ -81,6 +81,7 @@ def test_command_shape():
     assert cmd[:2] == ["lighteval", "accelerate"]
     assert "model_name=runs/sft/checkpoint-200" in cmd[2]
     assert "dtype=bfloat16" in cmd[2] and "batch_size=4" in cmd[2]
+    assert "max_length=4096" in cmd[2]
     assert "ifeval|0,gsm8k|5" in cmd
     assert "--max-samples" in cmd
 
