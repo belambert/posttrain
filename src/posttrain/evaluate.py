@@ -76,7 +76,8 @@ def collect_results(out_dir: str | Path) -> dict[str, dict[str, float]]:
 
 def _command(model: str, cfg: EvalConfig, device: str) -> list[str]:
     model_args = (
-        f"model_name={model},dtype={_dtype(device)},batch_size={cfg.batch_size}"
+        f"model_name={model},dtype={_dtype(device)},batch_size={cfg.batch_size},"
+        f"max_length={cfg.max_length}"
     )
     cmd = [
         "lighteval",

@@ -151,9 +151,11 @@ iterating. It avoids the two things that make the full suite slow:
 It also sets `max_samples = 100` and `baseline = "none"`. Turn the baseline back on once the
 harness is known to work — `"none"` is how a TOML file expresses null here.
 
-The 32768-token caps are worth understanding before running the full suite. If a checkpoint
-does not reliably emit `<|im_end|>`, those tasks generate to the cap on every sample and a
-ten-minute task becomes an all-day one.
+The full suite overrides those 32768-token caps with `max_length = 4096`, which bounds
+prompt plus generation, as in training. Without it, a checkpoint that does not reliably
+emit `<|im_end|>` generates to 32768 tokens, stalling its whole batch of 8 and turning a
+ten-minute task into an all-day one. Raise it, e.g. `-s max_length=32768`, only for a model
+that actually reasons at length.
 
 ### Fast-subset results
 

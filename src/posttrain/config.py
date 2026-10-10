@@ -46,6 +46,8 @@ class EvalConfig(TomlConfig):
     tasks: list[str] = field(default_factory=lambda: list(DEFAULT_TASKS))
     out_dir: str = "runs/evals"
     batch_size: int = 8
+    # prompt + generation; overrides the 32k budgets math_500 and gpqa:diamond set
+    max_length: int = 4096
     max_samples: int | None = None  # cap per task, for smoke-testing the harness
     device: str | None = None
 
